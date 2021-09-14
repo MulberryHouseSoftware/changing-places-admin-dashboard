@@ -5,13 +5,32 @@ import { Dialog, Transition } from "@headlessui/react";
 
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { Fragment, useRef, useState } from "react";
-import { CheckIcon, ExclamationIcon } from "@heroicons/react/outline";
+import React, { Fragment, useRef, useState } from "react";
+import { CheckIcon, ExclamationIcon, XIcon } from "@heroicons/react/outline";
 import { useForm } from "react-hook-form";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const dateFormat = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "long",
+  timeStyle: "short",
+}).format;
 
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
+
+  // If the status code is not in the range 200-299,
+  // we still try to parse and throw it.
+  if (!res.ok) {
+    const error: any = new Error("An error occurred while fetching the data.");
+    // Attach extra info to the error object.
+    error.info = await res.json();
+    error.status = res.status;
+    throw error;
+  }
+
+  return res.json();
+};
 const Edit: NextPage = () => {
+  const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState<any | null>(null);
   const cancelButtonRef = useRef(null);
@@ -19,14 +38,13 @@ const Edit: NextPage = () => {
   const { id } = router.query;
 
   const { data, error } = useSWR(
-    `/.netlify/functions/get-changing-place?id=${id}`,
+    id ? `/.netlify/functions/get-changing-place?id=${id}` : null,
     fetcher
   );
 
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
   } = useForm();
 
@@ -42,7 +60,7 @@ const Edit: NextPage = () => {
       },
       mode: "same-origin",
       cache: "no-cache",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ data, id }),
     });
 
     const json = await res.json();
@@ -64,7 +82,37 @@ const Edit: NextPage = () => {
     }
   };
 
-  if (!data) return <div>loading...</div>;
+  if (error) {
+    return (
+      <div className="min-h-screen pt-16 pb-12 flex flex-col bg-white">
+        <main className="flex-grow flex flex-col justify-center max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-16">
+            <div className="text-center">
+              <h1 className="mt-2 text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+                There was an error.
+              </h1>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="min-h-screen pt-16 pb-12 flex flex-col bg-white">
+        <main className="flex-grow flex flex-col justify-center max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-16">
+            <div className="text-center">
+              <h1 className="mt-2 text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+                Loading
+              </h1>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   const place = data.data;
 
@@ -83,7 +131,7 @@ const Edit: NextPage = () => {
                 Changing Place Information
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Please fill in as much information as you can.
+                Last updated: {dateFormat(new Date(data.ts / 1000))}
               </p>
             </div>
             <div className="mt-5 md:mt-0 md:col-span-2">
@@ -99,7 +147,7 @@ const Edit: NextPage = () => {
                     <input
                       type="text"
                       {...register("name", { required: true })}
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       defaultValue={place.name}
                     />
                     {errors.name && (
@@ -119,7 +167,7 @@ const Edit: NextPage = () => {
                     <input
                       type="text"
                       {...register("address_1")}
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       defaultValue={place.address_1}
                     />
                   </div>
@@ -134,7 +182,7 @@ const Edit: NextPage = () => {
                     <input
                       type="text"
                       {...register("address_2")}
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       defaultValue={place.address_2}
                     />
                   </div>
@@ -149,7 +197,7 @@ const Edit: NextPage = () => {
                     <input
                       type="text"
                       {...register("city")}
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       defaultValue={place.city}
                     />
                   </div>
@@ -165,7 +213,7 @@ const Edit: NextPage = () => {
                       type="text"
                       {...register("postcode")}
                       autoComplete="postal-code"
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       defaultValue={place.postcode}
                     />
                   </div>
@@ -180,14 +228,18 @@ const Edit: NextPage = () => {
                     <select
                       {...register("country")}
                       autoComplete="country"
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      defaultValue={place.country}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      defaultValue={
+                        place.country === "GB"
+                          ? "United Kingdom"
+                          : place.country
+                      }
                     >
-                      <option value="AU">Australia</option>
-                      <option value="FR">France</option>
-                      <option value="DE">Germany</option>
-                      <option value="GB">United Kingdom</option>
-                      <option value="US">United States</option>
+                      <option value="Australia">Australia</option>
+                      <option value="France">France</option>
+                      <option value="Germany">Germany</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="United States">United States</option>
                     </select>
                   </div>
 
@@ -200,8 +252,8 @@ const Edit: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      {...register("city")}
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      {...register("telephone")}
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="+44 1223 456 789"
                     />
                   </div>
@@ -216,7 +268,7 @@ const Edit: NextPage = () => {
                     <input
                       type="text"
                       {...register("email")}
-                      className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                      className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="owner@changingplaces.org"
                     />
                   </div>
@@ -235,7 +287,7 @@ const Edit: NextPage = () => {
                       <input
                         type="text"
                         {...register("website")}
-                        className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
+                        className="focus:ring-blue-500 focus:border-blue-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
                         placeholder="www.example.com"
                       />
                     </div>
@@ -250,9 +302,42 @@ const Edit: NextPage = () => {
                     </label>
                     <select
                       {...register("category")}
-                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      defaultValue={place.category}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
                       <option>Airport</option>
+                      <option>Church</option>
+                      <option>Government Building</option>
+                      <option>Hospital/ Healthcare</option>
+                      <option>Sport/Leisure Centre</option>
+                      <option>Museum</option>
+                      <option>Park</option>
+                      <option>Restaurant</option>
+                      <option>Retail/ Shopping Mall</option>
+                      <option>Roadside Service Station</option>
+                      <option>Sports Stadium</option>
+                      <option>Swimming Pool</option>
+                      <option>Visitor Attraction</option>
+                      <option>Theatre/Concert Hall</option>
+                      <option>Cinema</option>
+                      <option>Other</option>
+                    </select>
+                  </div>
+
+                  <div className="col-span-6 sm:col-span-3">
+                    <label
+                      htmlFor="equipment_standard"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Equipment standard
+                    </label>
+                    <select
+                      {...register("equipment_standard")}
+                      className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                      defaultValue={place.equipment_standard}
+                    >
+                      <option value="Green">Global</option>
+                      <option value="Yellow">Local</option>
                     </select>
                   </div>
 
@@ -267,9 +352,9 @@ const Edit: NextPage = () => {
                       <textarea
                         {...register("features")}
                         rows={10}
-                        className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
+                        className="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                         placeholder="e.g. hand rail"
-                        defaultValue={""}
+                        defaultValue={place.features.join("\n")}
                       />
                     </div>
                     <p className="mt-2 text-sm text-gray-500">
@@ -280,13 +365,22 @@ const Edit: NextPage = () => {
                 <div className="pt-5">
                   <div className="flex justify-end">
                     <Link href="/">
-                      <a className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                      <a className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Cancel
                       </a>
                     </Link>
                     <button
+                      type="button"
+                      className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      onClick={() => {
+                        setShowConfirmationDialog(true);
+                      }}
+                    >
+                      Delete
+                    </button>
+                    <button
                       type="submit"
-                      className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                      className="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                       disabled={saving}
                     >
                       {saving && (
@@ -394,14 +488,14 @@ const Edit: NextPage = () => {
                     <>
                       <button
                         type="button"
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
                         onClick={() => setNotification(null)}
                       >
                         Edit and try again
                       </button>
                       <Link href="/places">
                         <a
-                          className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                          className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                           onClick={() => setNotification(null)}
                           ref={cancelButtonRef}
                         >
@@ -413,7 +507,7 @@ const Edit: NextPage = () => {
                     <>
                       <Link href="/places/add">
                         <a
-                          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
+                          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
                           onClick={() => setNotification(null)}
                           ref={cancelButtonRef}
                         >
@@ -422,7 +516,7 @@ const Edit: NextPage = () => {
                       </Link>
                       <Link href="/places">
                         <a
-                          className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:col-start-1 sm:text-sm"
+                          className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                           onClick={() => setNotification(null)}
                           ref={cancelButtonRef}
                         >
@@ -431,6 +525,100 @@ const Edit: NextPage = () => {
                       </Link>
                     </>
                   )}
+                </div>
+              </div>
+            </Transition.Child>
+          </div>
+        </Dialog>
+      </Transition.Root>
+      <Transition.Root show={showConfirmationDialog} as={Fragment}>
+        <Dialog
+          as="div"
+          className="fixed z-10 inset-0 overflow-y-auto"
+          onClose={setShowConfirmationDialog}
+        >
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <Dialog.Overlay className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </Transition.Child>
+
+            {/* This element is to trick the browser into centering the modal contents. */}
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+              enterTo="opacity-100 translate-y-0 sm:scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+              leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            >
+              <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div className="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
+                  <button
+                    type="button"
+                    className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    onClick={() => setShowConfirmationDialog(false)}
+                  >
+                    <span className="sr-only">Close</span>
+                    <XIcon className="h-6 w-6" aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <ExclamationIcon
+                      className="h-6 w-6 text-red-600"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-lg leading-6 font-medium text-gray-900"
+                    >
+                      Delete Changing Place
+                    </Dialog.Title>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        Are you sure you want to delete this location? This is
+                        permanent.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    onClick={() => {
+                      fetch(
+                        `/.netlify/functions/delete-changing-place?id=${id}`
+                      );
+                      setShowConfirmationDialog(false);
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
+                    onClick={() => setShowConfirmationDialog(false)}
+                  >
+                    Cancel
+                  </button>
                 </div>
               </div>
             </Transition.Child>

@@ -11,12 +11,7 @@ const client = new faunadb.Client({
 });
 
 const handler: Handler = async (event, context) => {
-  const limit = event.queryStringParameters?.["limit"] ?? 10;
   const ref = event.queryStringParameters?.["id"];
-
-  const options: any = {
-    size: +limit,
-  };
 
   try {
     const data = await client.query<any>(
@@ -25,6 +20,13 @@ const handler: Handler = async (event, context) => {
         queryTimeout: 1000,
       }
     );
+
+    /*     if (data.requestResult.statusCode !== 200) {
+      return {
+        statusCode: data.requestResult.statusCode,
+        body: JSON.stringify(data.requestResult.responseContent),
+      };
+    } */
 
     return {
       statusCode: 200,
@@ -35,6 +37,7 @@ const handler: Handler = async (event, context) => {
 
     return {
       statusCode: 500,
+      body: JSON.stringify({}),
     };
   }
 };

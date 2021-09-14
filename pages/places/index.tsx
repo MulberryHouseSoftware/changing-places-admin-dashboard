@@ -6,26 +6,40 @@ import Link from "next/link";
 import React, { Fragment, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 
+const dateFormat = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "short",
+  timeStyle: "short",
+}).format;
+
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const getKey = (pageIndex: number, previousPageData: any) => {
-  // reached the end
   if (previousPageData && !previousPageData.data) return null;
 
-  // first page, we don't have `previousPageData`
   if (pageIndex === 0)
     return `/.netlify/functions/get-changing-places?limit=100`;
 
-  // add the cursor to the API endpoint
   return `/.netlify/functions/get-changing-places?cursor=${previousPageData.after[0]["@ref"].id}&limit=100`;
 };
 
 const Home: NextPage = () => {
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
-
   const { data, size, setSize } = useSWRInfinite(getKey, fetcher);
 
-  if (!data) return <div>loading...</div>;
+  if (!data)
+    return (
+      <div className="min-h-screen pt-16 pb-12 flex flex-col bg-white">
+        <main className="flex-grow flex flex-col justify-center max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="py-16">
+            <div className="text-center">
+              <h1 className="mt-2 text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+                Loading
+              </h1>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
 
   return (
     <div>
@@ -37,7 +51,7 @@ const Home: NextPage = () => {
       <main>
         <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
           <Link href="/places/add">
-            <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+            <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               Add Changing Place
             </a>
           </Link>
@@ -66,6 +80,12 @@ const Home: NextPage = () => {
                         >
                           Category
                         </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Last updated
+                        </th>
                         <th scope="col" className="relative px-6 py-3">
                           <span className="sr-only">Edit</span>
                         </th>
@@ -92,11 +112,14 @@ const Home: NextPage = () => {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {location.data.category}
                               </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {dateFormat(new Date(location.ts / 1000))}
+                              </td>
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <Link
                                   href={`/places/edit/${location.ref["@ref"].id}`}
                                 >
-                                  <a className="text-indigo-600 hover:text-indigo-900">
+                                  <a className="text-blue-600 hover:text-blue-900">
                                     Edit
                                   </a>
                                 </Link>
@@ -121,7 +144,7 @@ const Home: NextPage = () => {
                 </div>
                 <button
                   type="button"
-                  className="mt-4 w-full items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="mt-4 w-full items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   onClick={() => setSize(size + 1)}
                 >
                   Load More
@@ -170,7 +193,7 @@ const Home: NextPage = () => {
                 <div className="hidden sm:block absolute top-0 right-0 pt-4 pr-4">
                   <button
                     type="button"
-                    className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                    className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     onClick={() => setIdToDelete(null)}
                   >
                     <span className="sr-only">Close</span>
@@ -203,8 +226,10 @@ const Home: NextPage = () => {
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={() => {
-                      alert(idToDelete);
+                    onClick={async () => {
+                      await fetch(
+                        `/.netlify/functions/delete-changing-place?id=${idToDelete}`
+                      );
                       setIdToDelete(null);
                     }}
                   >
@@ -212,7 +237,7 @@ const Home: NextPage = () => {
                   </button>
                   <button
                     type="button"
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:w-auto sm:text-sm"
                     onClick={() => setIdToDelete(null)}
                   >
                     Cancel

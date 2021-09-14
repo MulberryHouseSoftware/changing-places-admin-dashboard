@@ -16,7 +16,6 @@ const mapsClient = new Client({});
 const handler: Handler = async (event, context) => {
   if (event.body) {
     const toilet = JSON.parse(event.body);
-    console.log(typeof toilet, toilet);
 
     const geocode = async (toilet: any) => {
       try {
@@ -59,15 +58,11 @@ const handler: Handler = async (event, context) => {
 
     const result = await geocode(toilet);
 
-    console.log(result);
-
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        message:
-          "Could not geocode. Please check address information or try supplying more details",
-      }),
-    };
+    const data = await dbClient.query<any>(
+      q.Create(q.Collection("changing_places"), {
+        data: { ...toilet, ...result },
+      })
+    );
 
     return {
       statusCode: 200,

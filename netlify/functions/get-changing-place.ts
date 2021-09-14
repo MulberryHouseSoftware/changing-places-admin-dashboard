@@ -12,22 +12,15 @@ const client = new faunadb.Client({
 
 const handler: Handler = async (event, context) => {
   const limit = event.queryStringParameters?.["limit"] ?? 10;
-  const ref = event.queryStringParameters?.["cursor"];
+  const ref = event.queryStringParameters?.["id"];
 
   const options: any = {
     size: +limit,
   };
 
-  if (ref) {
-    options.after = [q.Ref(q.Collection("changing_places"), ref)];
-  }
-
   try {
     const data = await client.query<any>(
-      q.Map(
-        q.Paginate(q.Documents(q.Collection("changing_places")), options),
-        q.Lambda((x) => q.Get(x))
-      ),
+      q.Get(q.Ref(q.Collection("changing_places"), ref)),
       {
         queryTimeout: 1000,
       }

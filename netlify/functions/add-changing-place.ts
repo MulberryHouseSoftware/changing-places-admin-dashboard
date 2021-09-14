@@ -59,6 +59,8 @@ const handler: Handler = async (event, context) => {
 
     const result = await geocode(toilet);
 
+    console.log(result);
+
     return {
       statusCode: 400,
       body: JSON.stringify({

@@ -1,42 +1,30 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
-import { FormEventHandler, useRef } from "react";
+import { useRef } from "react";
 import { Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { CheckIcon, ExclamationIcon } from "@heroicons/react/outline";
 import { useRouter } from "next/router";
+import { useForm } from "react-hook-form";
 
 const Add: NextPage = () => {
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState<any | null>(null);
-
   const cancelButtonRef = useRef(null);
-
   const router = useRouter();
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = async (event) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm();
 
-    const target = event.target as any;
-
-    const value = Object.fromEntries(
-      [
-        "name",
-        "address_1",
-        "address_2",
-        "city",
-        "postcode",
-        "country",
-        "telephone",
-        "email",
-        "website",
-        "category",
-        "features",
-      ].map((name) => [name, target[name].value])
-    );
-
+  const onSubmit = async (data: any) => {
     setSaving(true);
+
+    data = { ...data, features: data.features.split("\n") };
 
     const res = await fetch("/.netlify/functions/add-changing-place/", {
       method: "POST",
@@ -45,24 +33,24 @@ const Add: NextPage = () => {
       },
       mode: "same-origin",
       cache: "no-cache",
-      body: JSON.stringify(value),
+      body: JSON.stringify(data),
     });
 
-    const data = await res.json();
+    const json = await res.json();
 
     setSaving(false);
 
-    if (!res.ok) {
+    if (res.ok) {
       setNotification({
         intent: "success",
-        title: `${value.name} successfully saved!`,
+        title: `${data.name} successfully saved!`,
         subtitle: "Anyone can now view this location in the app",
       });
     } else {
       setNotification({
         intent: "error",
-        title: "Failed to save Changing Place.",
-        subtitle: data.message,
+        title: `Failed to save ${data.name}.`,
+        subtitle: json.message,
       });
     }
   };
@@ -86,7 +74,7 @@ const Add: NextPage = () => {
               </p>
             </div>
             <div className="mt-5 md:mt-0 md:col-span-2">
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit(onSubmit)}>
                 <div className="grid grid-cols-6 gap-6">
                   <div className="col-span-6">
                     <label
@@ -97,11 +85,14 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="name"
-                      id="name"
-                      required
+                      {...register("name", { required: true })}
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                     />
+                    {errors.name && (
+                      <p className="mt-2 text-sm text-red-600" id="email-error">
+                        This field is required
+                      </p>
+                    )}
                   </div>
 
                   <div className="col-span-6">
@@ -113,8 +104,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="address_1"
-                      id="address_1"
+                      {...register("address_1")}
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
@@ -128,8 +118,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="address_2"
-                      id="address_2"
+                      {...register("address_2")}
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
@@ -143,8 +132,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="city"
-                      id="city"
+                      {...register("city")}
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
@@ -158,8 +146,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="postcode"
-                      id="postcode"
+                      {...register("postcode")}
                       autoComplete="postcode"
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                     />
@@ -173,8 +160,7 @@ const Add: NextPage = () => {
                       Country
                     </label>
                     <select
-                      id="country"
-                      name="country"
+                      {...register("country")}
                       autoComplete="country"
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     >
@@ -195,8 +181,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="telephone"
-                      id="telephone"
+                      {...register("city")}
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="+44 1223 456 789"
                     />
@@ -211,8 +196,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      name="email"
-                      id="email"
+                      {...register("email")}
                       className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="owner@changingplaces.org"
                     />
@@ -231,8 +215,7 @@ const Add: NextPage = () => {
                       </span>
                       <input
                         type="text"
-                        name="website"
-                        id="website"
+                        {...register("website")}
                         className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
                         placeholder="www.example.com"
                       />
@@ -247,8 +230,7 @@ const Add: NextPage = () => {
                       Category
                     </label>
                     <select
-                      id="category"
-                      name="category"
+                      {...register("category")}
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     >
                       <option>Airport</option>
@@ -264,8 +246,7 @@ const Add: NextPage = () => {
                     </label>
                     <div className="mt-1">
                       <textarea
-                        id="features"
-                        name="features"
+                        {...register("features")}
                         rows={10}
                         className="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                         placeholder="e.g. hand rail"
@@ -397,7 +378,7 @@ const Add: NextPage = () => {
                         className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:col-start-2 sm:text-sm"
                         onClick={() => setNotification(null)}
                       >
-                        Update and try again
+                        Edit and try again
                       </button>
                       <Link href="/places">
                         <a

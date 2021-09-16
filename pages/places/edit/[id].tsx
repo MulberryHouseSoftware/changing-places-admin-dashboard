@@ -29,6 +29,7 @@ const fetcher = async (url: string) => {
 
   return res.json();
 };
+
 const Edit: NextPage = () => {
   const [showConfirmationDialog, setShowConfirmationDialog] = useState(false);
   const [saving, setSaving] = useState(false);

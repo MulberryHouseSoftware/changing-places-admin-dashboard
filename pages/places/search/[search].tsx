@@ -3,7 +3,9 @@ import { ExclamationIcon, SearchIcon, XIcon } from "@heroicons/react/outline";
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import React, { Fragment, useState } from "react";
+import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
@@ -11,21 +13,33 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", {
   timeStyle: "short",
 }).format;
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = async (url: string) => {
+  const res = await fetch(url);
 
-const getKey = (pageIndex: number, previousPageData: any) => {
-  if (previousPageData && !previousPageData.data) return null;
+  // If the status code is not in the range 200-299,
+  // we still try to parse and throw it.
+  if (!res.ok) {
+    const error: any = new Error("An error occurred while fetching the data.");
+    // Attach extra info to the error object.
+    error.info = await res.json();
+    error.status = res.status;
+    throw error;
+  }
 
-  if (pageIndex === 0)
-    return `/.netlify/functions/get-changing-places?limit=2000`;
-
-  return `/.netlify/functions/get-changing-places?cursor=${previousPageData.after[0]["@ref"].id}&limit=2000`;
+  return res.json();
 };
 
-const Home: NextPage = () => {
-  const [search, setSearch] = useState("");
+const Search: NextPage = () => {
+  const router = useRouter();
+  const { search } = router.query;
+
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
-  const { data, size, setSize } = useSWRInfinite(getKey, fetcher);
+  const { data, error } = useSWR(
+    `/.netlify/functions/search-changing-places?search=${search}`,
+    fetcher
+  );
+
+  console.log(data, search);
 
   if (!data)
     return (
@@ -46,50 +60,21 @@ const Home: NextPage = () => {
     <div>
       <Head>
         <title>Changing Places Admin Dashboard | Home</title>
-        <meta name="description" content="Changing Places Admin Dashboard" />
+        <meta
+          name="description"
+          content="Changing Places Admin Dashboard | Search"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main>
         <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
-          <div className="flex flex-row">
-            <Link href="/places/add">
-              <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Add Changing Place
-              </a>
-            </Link>
-            <div className="px-3">
-              <label htmlFor="search" className="sr-only">
-                Search
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div
-                  className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
-                  aria-hidden="true"
-                >
-                  <SearchIcon
-                    className="mr-3 h-4 w-4 text-gray-400"
-                    aria-hidden="true"
-                  />
-                </div>
-                <input
-                  type="text"
-                  name="search"
-                  id="search"
-                  className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 sm:text-sm border-gray-300 rounded-md"
-                  placeholder="Search for exact name"
-                  value={search}
-                  onChange={(event) => {
-                    setSearch(event.target.value);
-                  }}
-                />
-              </div>
-            </div>
-            <Link href={`/places/search/${search}`}>
-              <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Search
-              </a>
-            </Link>
-          </div>
+          <button
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            type="button"
+            onClick={() => router.back()}
+          >
+            Back
+          </button>
           <div className="mt-4 flex flex-col">
             <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
               <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
@@ -133,73 +118,60 @@ const Home: NextPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.map((locations) =>
-                        locations.data.map(
-                          (location: any, locationIndex: number) => (
-                            <tr
-                              key={location.ref["@ref"].id}
-                              className={
-                                locationIndex % 2 === 0
-                                  ? "bg-white"
-                                  : "bg-gray-50"
-                              }
+                      {data.data.map((location: any, locationIndex: number) => (
+                        <tr
+                          key={location.ref["@ref"].id}
+                          className={
+                            locationIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
+                          }
+                        >
+                          <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {location.data.name}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {location.data.country}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {location.data.category}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {dateFormat(new Date(location.ts / 1000))}
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <a
+                              target="_blank"
+                              rel="noreferrer"
+                              href={`https://app.changingplacesinternational.org/?latLng=${location.data.lat}%2C${location.data.lng}&location=${location.ref["@ref"].id}`}
+                              className="text-blue-600 hover:text-blue-900"
                             >
-                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {location.data.name}
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {location.data.country}
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {location.data.category}
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {dateFormat(new Date(location.ts / 1000))}
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <a
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  href={`https://app.changingplacesinternational.org/?latLng=${location.data.lat}%2C${location.data.lng}&location=${location.ref["@ref"].id}`}
-                                  className="text-blue-600 hover:text-blue-900"
-                                >
-                                  View
-                                </a>
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <Link
-                                  href={`/places/edit/${location.ref["@ref"].id}`}
-                                >
-                                  <a className="text-blue-600 hover:text-blue-900">
-                                    Edit
-                                  </a>
-                                </Link>
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button
-                                  type="button"
-                                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                                  onClick={() => {
-                                    setIdToDelete(location.ref["@ref"].id);
-                                  }}
-                                >
-                                  Delete
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                        )
-                      )}
+                              View
+                            </a>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <Link
+                              href={`/places/edit/${location.ref["@ref"].id}`}
+                            >
+                              <a className="text-blue-600 hover:text-blue-900">
+                                Edit
+                              </a>
+                            </Link>
+                          </td>
+                          <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button
+                              type="button"
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                              onClick={() => {
+                                setIdToDelete(location.ref["@ref"].id);
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
-                <button
-                  type="button"
-                  className="mt-4 w-full items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  onClick={() => setSize(size + 1)}
-                >
-                  Load More
-                </button>
               </div>
             </div>
           </div>
@@ -303,4 +275,4 @@ const Home: NextPage = () => {
   );
 };
 
-export default Home;
+export default Search;

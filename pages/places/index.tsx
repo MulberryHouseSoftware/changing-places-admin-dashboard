@@ -17,9 +17,9 @@ const getKey = (pageIndex: number, previousPageData: any) => {
   if (previousPageData && !previousPageData.data) return null;
 
   if (pageIndex === 0)
-    return `/.netlify/functions/get-changing-places?limit=100`;
+    return `/.netlify/functions/get-changing-places?limit=2000`;
 
-  return `/.netlify/functions/get-changing-places?cursor=${previousPageData.after[0]["@ref"].id}&limit=100`;
+  return `/.netlify/functions/get-changing-places?cursor=${previousPageData.after[0]["@ref"].id}&limit=2000`;
 };
 
 const Home: NextPage = () => {
@@ -64,30 +64,36 @@ const Home: NextPage = () => {
                       <tr>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Name
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Country
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Category
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Last updated
                         </th>
-                        <th scope="col" className="relative px-6 py-3">
+                        <th scope="col" className="relative px-4 py-3">
+                          <span className="sr-only">View</span>
+                        </th>
+                        <th scope="col" className="relative px-4 py-3">
                           <span className="sr-only">Edit</span>
+                        </th>
+                        <th scope="col" className="relative px-4 py-3">
+                          <span className="sr-only">Delete</span>
                         </th>
                       </tr>
                     </thead>
@@ -103,19 +109,29 @@ const Home: NextPage = () => {
                                   : "bg-gray-50"
                               }
                             >
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                 {location.data.name}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {location.data.country}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {location.data.category}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {dateFormat(new Date(location.ts / 1000))}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  href={`https://app.changingplacesinternational.org/?latLng=${location.data.lat}%2C${location.data.lng}&location=${location.ref["@ref"].id}`}
+                                  className="text-blue-600 hover:text-blue-900"
+                                >
+                                  View
+                                </a>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <Link
                                   href={`/places/edit/${location.ref["@ref"].id}`}
                                 >
@@ -124,7 +140,7 @@ const Home: NextPage = () => {
                                   </a>
                                 </Link>
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button
                                   type="button"
                                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"

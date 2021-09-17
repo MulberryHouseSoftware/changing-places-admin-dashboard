@@ -35,11 +35,11 @@ const Search: NextPage = () => {
 
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
   const { data, error } = useSWR(
-    `/.netlify/functions/search-changing-places?search=${search}`,
+    search
+      ? `/.netlify/functions/search-changing-places?search=${search}`
+      : null,
     fetcher
   );
-
-  console.log(data, search);
 
   if (!data)
     return (

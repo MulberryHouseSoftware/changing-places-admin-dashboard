@@ -16,7 +16,15 @@ const handler: Handler = async (event, context) => {
   try {
     const data = await client.query<any>(
       q.Map(
-        q.Paginate(q.Match(q.Index("changing_places_by_name"), search)),
+        q.Filter(
+          q.Paginate(q.Match(q.Index("all_changing_places")), { size: 10000 }),
+          q.Lambda((x) =>
+            q.ContainsStr(
+              q.LowerCase(q.Select(["data", "name"], q.Get(x), "@Worle")),
+              search.toLocaleLowerCase()
+            )
+          )
+        ),
         q.Lambda((x) => q.Get(x))
       ),
       {

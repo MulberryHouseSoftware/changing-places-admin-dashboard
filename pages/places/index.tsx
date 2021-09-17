@@ -3,6 +3,7 @@ import { ExclamationIcon, SearchIcon, XIcon } from "@heroicons/react/outline";
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import React, { Fragment, useState } from "react";
 import useSWRInfinite from "swr/infinite";
 
@@ -26,6 +27,7 @@ const Home: NextPage = () => {
   const [search, setSearch] = useState("");
   const [idToDelete, setIdToDelete] = useState<string | null>(null);
   const { data, size, setSize } = useSWRInfinite(getKey, fetcher);
+  const router = useRouter();
 
   if (!data)
     return (
@@ -76,10 +78,17 @@ const Home: NextPage = () => {
                   name="search"
                   id="search"
                   className="focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 sm:text-sm border-gray-300 rounded-md"
-                  placeholder="Search for exact name"
+                  placeholder="Search for location name"
                   value={search}
                   onChange={(event) => {
                     setSearch(event.target.value);
+                  }}
+                  onKeyUp={(event) => {
+                    event.preventDefault();
+
+                    if (event.key === "Enter") {
+                      router.push(`/places/search/${search}`);
+                    }
                   }}
                 />
               </div>

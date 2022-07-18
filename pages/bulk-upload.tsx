@@ -30,7 +30,7 @@ const BulkUpload: NextPage = () => {
     reader.addEventListener(
       "load",
       async () => {
-        const data = csvParse(reader.result);
+        const data = csvParse(reader.result as string);
 
         for (const location of data.slice(10)) {
           let filteredProperties: any = Object.fromEntries(

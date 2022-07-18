@@ -23,6 +23,7 @@
     "swr": "1.0.1"
   },
   "devDependencies": {
+    "@types/d3-dsv": "^3.0.0",
     "@types/react": "17.0.20",
     "autoprefixer": "^10.3.4",
     "eslint": "7.32.0",

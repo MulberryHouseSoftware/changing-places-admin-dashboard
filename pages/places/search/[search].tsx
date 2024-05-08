@@ -149,6 +149,7 @@ const Search: NextPage = () => {
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Link
+                              legacyBehavior
                               href={`/places/edit/${location.ref["@ref"].id}`}
                             >
                               <a className="text-blue-600 hover:text-blue-900">

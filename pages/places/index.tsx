@@ -54,7 +54,7 @@ const Home: NextPage = () => {
       <main>
         <div className="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
           <div className="flex flex-row">
-            <Link href="/places/add">
+            <Link legacyBehavior href="/places/add">
               <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Add Changing Place
               </a>
@@ -93,7 +93,7 @@ const Home: NextPage = () => {
                 />
               </div>
             </div>
-            <Link href={`/places/search/${search}`}>
+            <Link legacyBehavior href={`/places/search/${search}`}>
               <a className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 Search
               </a>
@@ -177,6 +177,7 @@ const Home: NextPage = () => {
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <Link
+                                  legacyBehavior
                                   href={`/places/edit/${location.ref["@ref"].id}`}
                                 >
                                   <a className="text-blue-600 hover:text-blue-900">

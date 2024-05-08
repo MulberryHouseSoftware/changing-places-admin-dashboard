@@ -1,3 +1,20 @@
 {
-	"siteId": "7a0d35c9-84f1-4f3d-9376-8aa8c5d134fa"
+	"siteId": "7a0d35c9-84f1-4f3d-9376-8aa8c5d134fa",
+	"geolocation": {
+		"data": {
+			"city": "Cambourne",
+			"country": {
+				"code": "GB",
+				"name": "United Kingdom"
+			},
+			"subdivision": {
+				"code": "ENG",
+				"name": "England"
+			},
+			"timezone": "Europe/London",
+			"latitude": 52.2187,
+			"longitude": -0.0732
+		},
+		"timestamp": 1715175682896
+	}
 }

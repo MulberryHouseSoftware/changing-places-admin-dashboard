@@ -290,7 +290,7 @@ const Add: NextPage = () => {
                 </div>
                 <div className="pt-5">
                   <div className="flex justify-end">
-                    <Link href="/">
+                    <Link legacyBehavior href="/">
                       <a className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Cancel
                       </a>
@@ -410,7 +410,7 @@ const Add: NextPage = () => {
                       >
                         Edit and try again
                       </button>
-                      <Link href="/places">
+                      <Link legacyBehavior href="/places">
                         <a
                           className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                           onClick={() => setNotification(null)}
@@ -431,7 +431,7 @@ const Add: NextPage = () => {
                       >
                         Add another Changing Place
                       </button>
-                      <Link href="/places">
+                      <Link legacyBehavior href="/places">
                         <a
                           className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                           onClick={() => setNotification(null)}

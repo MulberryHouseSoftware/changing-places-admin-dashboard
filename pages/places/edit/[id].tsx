@@ -365,7 +365,7 @@ const Edit: NextPage = () => {
                 </div>
                 <div className="pt-5">
                   <div className="flex justify-end">
-                    <Link href="/">
+                    <Link legacyBehavior href="/">
                       <a className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                         Cancel
                       </a>
@@ -494,7 +494,7 @@ const Edit: NextPage = () => {
                       >
                         Edit and try again
                       </button>
-                      <Link href="/places">
+                      <Link legacyBehavior href="/places">
                         <a
                           className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                           onClick={() => setNotification(null)}
@@ -506,7 +506,7 @@ const Edit: NextPage = () => {
                     </>
                   ) : (
                     <>
-                      <Link href="/places/add">
+                      <Link legacyBehavior href="/places/add">
                         <a
                           className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
                           onClick={() => setNotification(null)}
@@ -515,7 +515,7 @@ const Edit: NextPage = () => {
                           Add another Changing Place
                         </a>
                       </Link>
-                      <Link href="/places">
+                      <Link legacyBehavior href="/places">
                         <a
                           className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
                           onClick={() => setNotification(null)}

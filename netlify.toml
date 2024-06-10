@@ -1,4 +1,7 @@
 # example netlify.toml
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+  
 [build]
   command = "next build"
   functions = "netlify/functions"

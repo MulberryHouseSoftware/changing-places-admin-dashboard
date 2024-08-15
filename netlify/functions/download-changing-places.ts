@@ -21,7 +21,9 @@ const handler: Handler = async (event, context) => {
       };
     }
 
-    console.log(`Found ${data.length} locations`);
+    if (!data) {
+      throw new Error("No data found");
+    }
 
     return {
       statusCode: 200,

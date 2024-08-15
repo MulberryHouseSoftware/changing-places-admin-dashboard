@@ -180,7 +180,7 @@ const Add: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      {...register("city")}
+                      {...register("tel")}
                       className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="+44 1223 456 789"
                     />
@@ -214,9 +214,9 @@ const Add: NextPage = () => {
                       </span>
                       <input
                         type="text"
-                        {...register("website")}
+                        {...register("url")}
                         className="focus:ring-blue-500 focus:border-blue-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                        placeholder="www.example.com"
+                        placeholder={"www.example.com"}
                       />
                     </div>
                   </div>
@@ -280,7 +280,6 @@ const Add: NextPage = () => {
                         rows={10}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                         placeholder="e.g. hand rail"
-                        defaultValue={""}
                       />
                     </div>
                     <p className="mt-2 text-sm text-gray-500">

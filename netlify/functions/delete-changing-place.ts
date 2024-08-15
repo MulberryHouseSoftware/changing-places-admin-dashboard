@@ -1,28 +1,28 @@
 import { Handler } from "@netlify/functions";
-import faunadb from "faunadb";
+import { createClient } from "@supabase/supabase-js";
 
-const q = faunadb.query;
+import { Database } from "../../database.types";
 
-const dbClient = new faunadb.Client({
-  secret: process.env.FAUNADB_ADMIN_SECRET as string,
-  domain: "db.fauna.com",
-  port: 443,
-  scheme: "https",
-});
+// Create a single supabase client for interacting with your database
+const supabase = createClient<Database>(
+  "https://acgqinkinrullsbkcihi.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const handler: Handler = async (event, context) => {
   const id = event.queryStringParameters?.["id"];
 
-  const res = await dbClient.query(
-    q.Delete(q.Ref(q.Collection("changing_places"), id)),
-    {
-      queryTimeout: 1000,
-    }
-  );
+  if (!id) {
+    return {
+      statusCode: 400,
+    };
+  }
+
+  const response = await supabase.from("toilets").delete().eq("id", id);
 
   return {
     statusCode: 200,
-    body: JSON.stringify(res),
+    body: JSON.stringify(response),
   };
 };
 

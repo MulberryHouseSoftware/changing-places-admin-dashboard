@@ -1,15 +1,14 @@
 import { Handler } from "@netlify/functions";
-import faunadb from "faunadb";
 import { Client } from "@googlemaps/google-maps-services-js";
+import { createClient } from "@supabase/supabase-js";
 
-const q = faunadb.query;
+import { Database } from "../../database.types";
 
-const dbClient = new faunadb.Client({
-  secret: process.env.FAUNADB_ADMIN_SECRET as string,
-  domain: "db.fauna.com",
-  port: 443,
-  scheme: "https",
-});
+// Create a single supabase client for interacting with your database
+const supabase = createClient<Database>(
+  "https://acgqinkinrullsbkcihi.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const mapsClient = new Client({});
 
@@ -58,11 +57,17 @@ const handler: Handler = async (event, context) => {
 
     const result = await geocode(toilet);
 
-    const data = await dbClient.query<any>(
-      q.Create(q.Collection("changing_places"), {
-        data: { ...toilet, ...result },
-      })
-    );
+    const { error } = await supabase
+      .from("toilets")
+      .insert({ ...toilet, ...result });
+
+    if (error) {
+      console.log(error);
+
+      return {
+        statusCode: 500,
+      };
+    }
 
     return {
       statusCode: 200,

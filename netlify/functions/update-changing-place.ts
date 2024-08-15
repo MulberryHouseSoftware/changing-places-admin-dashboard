@@ -1,15 +1,15 @@
 import { Handler } from "@netlify/functions";
-import faunadb from "faunadb";
 import { Client } from "@googlemaps/google-maps-services-js";
 
-const q = faunadb.query;
+import { createClient } from "@supabase/supabase-js";
 
-const dbClient = new faunadb.Client({
-  secret: process.env.FAUNADB_ADMIN_SECRET as string,
-  domain: "db.fauna.com",
-  port: 443,
-  scheme: "https",
-});
+import { Database } from "../../database.types";
+
+// Create a single supabase client for interacting with your database
+const supabase = createClient<Database>(
+  "https://acgqinkinrullsbkcihi.supabase.co",
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 const mapsClient = new Client({});
 
@@ -20,56 +20,31 @@ const handler: Handler = async (event, context) => {
     const toilet = data.data;
     const id = data.id;
 
-    console.log(toilet, id);
+    console.log(id, toilet);
 
-    const res = await dbClient.query(
-      q.Update(q.Ref(q.Collection("changing_places"), id), { data: toilet }),
-      {
-        queryTimeout: 1000,
-      }
-    );
+    const { error } = await supabase
+      .from("toilets")
+      .update(toilet)
+      .eq("id", id);
 
-    console.log(res);
+    if (error) {
+      console.log(error);
+
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: error }),
+      };
+    }
 
     return {
       statusCode: 200,
-      body: JSON.stringify(res),
+      body: JSON.stringify(toilet),
     };
   } else {
     return {
       statusCode: 500,
     };
   }
-
-  /*
-  Update(
-  Ref(Collection("Spaceships"), "266354515987399186"),
-  // NOTE: be sure to use your ship's document ID here
-  {
-    data: {
-      name: "Millennium Falcon"
-    }
-  }
-)*/
-  /* try {
-    const data = await dbClient.query<any>(
-      q.Get(q.Ref(q.Collection("changing_places"), ref)),
-      {
-        queryTimeout: 1000,
-      }
-    );
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data),
-    };
-  } catch (error) {
-    console.log(error);
-
-    return {
-      statusCode: 500,
-    };
-  } */
 };
 
 export { handler };

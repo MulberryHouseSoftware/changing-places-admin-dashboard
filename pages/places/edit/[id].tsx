@@ -8,6 +8,7 @@ import Link from "next/link";
 import React, { Fragment, useRef, useState } from "react";
 import { CheckIcon, ExclamationIcon, XIcon } from "@heroicons/react/outline";
 import { useForm } from "react-hook-form";
+import { Tables } from "../../../database.types";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "long",
@@ -38,7 +39,7 @@ const Edit: NextPage = () => {
   const router = useRouter();
   const { id } = router.query;
 
-  const { data, error } = useSWR(
+  const { data, error } = useSWR<Tables<"toilets">>(
     id ? `/.netlify/functions/get-changing-place?id=${id}` : null,
     fetcher
   );
@@ -115,7 +116,7 @@ const Edit: NextPage = () => {
     );
   }
 
-  const place = data.data;
+  const place = data;
 
   return (
     <div>
@@ -132,7 +133,7 @@ const Edit: NextPage = () => {
                 Changing Place Information
               </h3>
               <p className="mt-1 text-sm text-gray-500">
-                Last updated: {dateFormat(new Date(data.ts / 1000))}
+                Last updated: {dateFormat(new Date(place.updated_at))}
               </p>
             </div>
             <div className="mt-5 md:mt-0 md:col-span-2">
@@ -184,7 +185,7 @@ const Edit: NextPage = () => {
                       type="text"
                       {...register("address_2")}
                       className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                      defaultValue={place.address_2}
+                      defaultValue={place.address_2 ?? ""}
                     />
                   </div>
 
@@ -253,9 +254,10 @@ const Edit: NextPage = () => {
                     </label>
                     <input
                       type="text"
-                      {...register("telephone")}
+                      {...register("tel")}
                       className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="+44 1223 456 789"
+                      defaultValue={place.tel ?? ""}
                     />
                   </div>
 
@@ -271,6 +273,7 @@ const Edit: NextPage = () => {
                       {...register("email")}
                       className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                       placeholder="owner@changingplaces.org"
+                      defaultValue={place.email ?? ""}
                     />
                   </div>
 
@@ -287,9 +290,10 @@ const Edit: NextPage = () => {
                       </span>
                       <input
                         type="text"
-                        {...register("website")}
+                        {...register("url")}
                         className="focus:ring-blue-500 focus:border-blue-500 flex-1 block w-full rounded-none rounded-r-md sm:text-sm border-gray-300"
-                        placeholder="www.example.com"
+                        placeholder={undefined}
+                        defaultValue={place.url ?? ""}
                       />
                     </div>
                   </div>
@@ -303,7 +307,7 @@ const Edit: NextPage = () => {
                     </label>
                     <select
                       {...register("category")}
-                      defaultValue={place.category}
+                      defaultValue={place.category ?? ""}
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                     >
                       <option>Airport</option>
@@ -335,7 +339,7 @@ const Edit: NextPage = () => {
                     <select
                       {...register("equipment_standard")}
                       className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      defaultValue={place.equipment_standard}
+                      defaultValue={place.equipment_standard ?? ""}
                     >
                       <option value="Green">Global</option>
                       <option value="Yellow">Local</option>
@@ -355,7 +359,7 @@ const Edit: NextPage = () => {
                         rows={10}
                         className="shadow-sm focus:ring-blue-500 focus:border-blue-500 mt-1 block w-full sm:text-sm border border-gray-300 rounded-md"
                         placeholder="e.g. hand rail"
-                        defaultValue={place.features.join("\n")}
+                        defaultValue={place.features?.join("\n") ?? ""}
                       />
                     </div>
                     <p className="mt-2 text-sm text-gray-500">
@@ -506,15 +510,13 @@ const Edit: NextPage = () => {
                     </>
                   ) : (
                     <>
-                      <Link legacyBehavior href="/places/add">
-                        <a
-                          className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
-                          onClick={() => setNotification(null)}
-                          ref={cancelButtonRef}
-                        >
-                          Add another Changing Place
-                        </a>
-                      </Link>
+                      <button
+                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:col-start-2 sm:text-sm"
+                        onClick={() => setNotification(null)}
+                        ref={cancelButtonRef}
+                      >
+                        Continue editing this Changing Place
+                      </button>
                       <Link legacyBehavior href="/places">
                         <a
                           className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:col-start-1 sm:text-sm"
@@ -604,10 +606,13 @@ const Edit: NextPage = () => {
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={() => {
-                      fetch(
+                    onClick={async () => {
+                      await fetch(
                         `/.netlify/functions/delete-changing-place?id=${id}`
                       );
+
+                      router.push("/places");
+
                       setShowConfirmationDialog(false);
                     }}
                   >

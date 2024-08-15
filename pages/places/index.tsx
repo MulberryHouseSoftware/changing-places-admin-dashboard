@@ -5,7 +5,8 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { Fragment, useState } from "react";
-import useSWRInfinite from "swr/infinite";
+import useSWRInfinite, { SWRInfiniteKeyLoader } from "swr/infinite";
+import { Tables } from "../../database.types";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "short",
@@ -14,19 +15,21 @@ const dateFormat = new Intl.DateTimeFormat("en-GB", {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const getKey = (pageIndex: number, previousPageData: any) => {
-  if (previousPageData && !previousPageData.data) return null;
+const getKey: SWRInfiniteKeyLoader = (pageIndex, previousPageData) => {
+  if (previousPageData && !previousPageData.length) return null;
 
-  if (pageIndex === 0)
-    return `/.netlify/functions/get-changing-places?limit=2000`;
-
-  return `/.netlify/functions/get-changing-places?cursor=${previousPageData.after[0]["@ref"].id}&limit=2000`;
+  return `/.netlify/functions/get-changing-places?page=${pageIndex}&limit=2000`;
 };
 
 const Home: NextPage = () => {
   const [search, setSearch] = useState("");
-  const [idToDelete, setIdToDelete] = useState<string | null>(null);
-  const { data, size, setSize } = useSWRInfinite(getKey, fetcher);
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
+
+  const { data, size, setSize } = useSWRInfinite<Tables<"toilets">[]>(
+    getKey,
+    fetcher
+  );
+
   const router = useRouter();
 
   if (!data)
@@ -143,10 +146,10 @@ const Home: NextPage = () => {
                     </thead>
                     <tbody>
                       {data.map((locations) =>
-                        locations.data.map(
+                        locations.map(
                           (location: any, locationIndex: number) => (
                             <tr
-                              key={location.ref["@ref"].id}
+                              key={location.id}
                               className={
                                 locationIndex % 2 === 0
                                   ? "bg-white"
@@ -154,22 +157,22 @@ const Home: NextPage = () => {
                               }
                             >
                               <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                {location.data.name}
+                                {location.name}
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {location.data.country}
+                                {location.country}
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {location.data.category}
+                                {location.category}
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {dateFormat(new Date(location.ts / 1000))}
+                                {dateFormat(new Date(location.updated_at))}
                               </td>
                               <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <a
                                   target="_blank"
                                   rel="noreferrer"
-                                  href={`https://app.changingplacesinternational.org/?latLng=${location.data.lat}%2C${location.data.lng}&location=${location.ref["@ref"].id}`}
+                                  href={`https://app.changingplacesinternational.org/?latLng=${location.lat}%2C${location.lng}&location=${location.id}`}
                                   className="text-blue-600 hover:text-blue-900"
                                 >
                                   View
@@ -178,7 +181,7 @@ const Home: NextPage = () => {
                               <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <Link
                                   legacyBehavior
-                                  href={`/places/edit/${location.ref["@ref"].id}`}
+                                  href={`/places/edit/${location.id}`}
                                 >
                                   <a className="text-blue-600 hover:text-blue-900">
                                     Edit
@@ -190,7 +193,7 @@ const Home: NextPage = () => {
                                   type="button"
                                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                                   onClick={() => {
-                                    setIdToDelete(location.ref["@ref"].id);
+                                    setIdToDelete(location.id);
                                   }}
                                 >
                                   Delete

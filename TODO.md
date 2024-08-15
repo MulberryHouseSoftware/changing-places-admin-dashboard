@@ -1,0 +1,1 @@
+Use NULL not EMPTY when creating/updating changing places in database

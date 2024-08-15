@@ -1,45 +1,34 @@
 import { Handler } from "@netlify/functions";
-import faunadb, { Collection } from "faunadb";
 import { csvFormat } from "d3-dsv";
 
-const q = faunadb.query;
+import { createClient } from "@supabase/supabase-js";
 
-const client = new faunadb.Client({
-  secret: process.env.FAUNADB_ADMIN_SECRET as string,
-  domain: "db.fauna.com",
-  port: 443,
-  scheme: "https",
-});
+import { Database } from "../../database.types";
+
+// Create a single supabase client for interacting with your database
+const supabase = createClient<Database>(
+  "https://acgqinkinrullsbkcihi.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjZ3FpbmtpbnJ1bGxzYmtjaWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4MDAyMjUsImV4cCI6MjAxOTM3NjIyNX0.MkWX_HO7D4sgHh1DPRS5NlY_ELIZtxqUjMRVkW8Bkes"
+);
 
 const handler: Handler = async (event, context) => {
-  const limit = event.queryStringParameters?.["limit"] ?? 20000;
-  const ref = event.queryStringParameters?.["cursor"];
-
-  const options: any = {
-    size: +limit,
-  };
-
-  if (ref) {
-    options.after = [q.Ref(q.Collection("changing_places"), ref)];
-  }
-
   try {
-    const data = await client.query<any>(
-      q.Map(
-        q.Paginate(q.Documents(q.Collection("changing_places")), options),
-        q.Lambda((x) => q.Get(x))
-      ),
-      {
-        queryTimeout: 1000,
-      }
-    );
+    const { data, error } = await supabase.from("toilets").select();
 
-    console.log(`Found ${data.data.length} locations`);
+    if (error) {
+      return {
+        statusCode: 500,
+      };
+    }
+
+    if (!data) {
+      throw new Error("No data found");
+    }
 
     return {
       statusCode: 200,
       contentType: "text/csv",
-      body: csvFormat(data.data.map((d: any) => ({ ...d.data }))),
+      body: csvFormat(data),
     };
   } catch (error) {
     console.log(error);

@@ -7,6 +7,7 @@ import { useRouter } from "next/router";
 import React, { Fragment, useState } from "react";
 import useSWR from "swr";
 import useSWRInfinite from "swr/infinite";
+import { Tables } from "../../../database.types";
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", {
   dateStyle: "short",
@@ -33,8 +34,8 @@ const Search: NextPage = () => {
   const router = useRouter();
   const { search } = router.query;
 
-  const [idToDelete, setIdToDelete] = useState<string | null>(null);
-  const { data, error } = useSWR(
+  const [idToDelete, setIdToDelete] = useState<number | null>(null);
+  const { data, error } = useSWR<Tables<"toilets">[]>(
     search
       ? `/.netlify/functions/search-changing-places?search=${search}`
       : null,
@@ -118,30 +119,30 @@ const Search: NextPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.data.map((location: any, locationIndex: number) => (
+                      {data.map((location, locationIndex) => (
                         <tr
-                          key={location.ref["@ref"].id}
+                          key={location.id}
                           className={
                             locationIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
                           }
                         >
                           <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {location.data.name}
+                            {location.name}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {location.data.country}
+                            {location.country}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {location.data.category}
+                            {location.category}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {dateFormat(new Date(location.ts / 1000))}
+                            {dateFormat(new Date(location.updated_at))}
                           </td>
                           <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <a
                               target="_blank"
                               rel="noreferrer"
-                              href={`https://app.changingplacesinternational.org/?latLng=${location.data.lat}%2C${location.data.lng}&location=${location.ref["@ref"].id}`}
+                              href={`https://app.changingplacesinternational.org/?latLng=${location.lat}%2C${location.lng}&location=${location.id}`}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               View
@@ -150,7 +151,7 @@ const Search: NextPage = () => {
                           <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Link
                               legacyBehavior
-                              href={`/places/edit/${location.ref["@ref"].id}`}
+                              href={`/places/edit/${location.id}`}
                             >
                               <a className="text-blue-600 hover:text-blue-900">
                                 Edit
@@ -162,7 +163,7 @@ const Search: NextPage = () => {
                               type="button"
                               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                               onClick={() => {
-                                setIdToDelete(location.ref["@ref"].id);
+                                setIdToDelete(location.id);
                               }}
                             >
                               Delete

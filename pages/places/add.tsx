@@ -25,7 +25,7 @@ const Add: NextPage = () => {
 
     data = { ...data, features: data.features.split("\n") };
 
-    const res = await fetch("/.netlify/functions/add-changing-place/", {
+    const res = await fetch("/api/add-changing-place/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

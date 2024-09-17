@@ -40,7 +40,7 @@ const Edit: NextPage = () => {
   const { id } = router.query;
 
   const { data, error } = useSWR<Tables<"toilets">>(
-    id ? `/.netlify/functions/get-changing-place?id=${id}` : null,
+    id ? `/api/get-changing-place?id=${id}` : null,
     fetcher
   );
 
@@ -55,7 +55,7 @@ const Edit: NextPage = () => {
 
     data = { ...data, features: data.features.split("\n") };
 
-    const res = await fetch("/.netlify/functions/update-changing-place/", {
+    const res = await fetch("/api/update-changing-place/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -608,7 +608,7 @@ const Edit: NextPage = () => {
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                     onClick={async () => {
                       await fetch(
-                        `/.netlify/functions/delete-changing-place?id=${id}`
+                        `/api/delete-changing-place?id=${id}`
                       );
 
                       router.push("/places");

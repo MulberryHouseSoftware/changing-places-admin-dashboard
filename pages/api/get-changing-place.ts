@@ -1,7 +1,7 @@
-import { Handler } from "@netlify/functions";
-import { createClient } from "@supabase/supabase-js";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 import { Database } from "../../database.types";
+import { createClient } from "@supabase/supabase-js";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(
@@ -9,31 +9,33 @@ const supabase = createClient<Database>(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjZ3FpbmtpbnJ1bGxzYmtjaWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4MDAyMjUsImV4cCI6MjAxOTM3NjIyNX0.MkWX_HO7D4sgHh1DPRS5NlY_ELIZtxqUjMRVkW8Bkes"
 );
 
-const handler: Handler = async (event, context) => {
-  const limit = event.queryStringParameters?.["limit"] ?? 10;
-  const page = event.queryStringParameters?.["page"] ?? 0;
-
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
+    const { id } = req.query;
+
+    if (!id) {
+      return {
+        statusCode: 400,
+      };
+    }
+
     const { data, error } = await supabase
       .from("toilets")
       .select()
-      .range(+page * +limit, (+page + 1) * +limit - 1);
+      .eq("id", id)
+      .single();
 
     if (error) {
-      throw error;
+      console.error(error);
     }
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify(data),
-    };
+    res.status(200).json(data);
   } catch (error) {
     console.log(error);
 
-    return {
-      statusCode: 500,
-    };
+    res.status(500).json({ error: "failed to load data" });
   }
-};
-
-export { handler };
+}

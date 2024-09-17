@@ -18,7 +18,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 const getKey: SWRInfiniteKeyLoader = (pageIndex, previousPageData) => {
   if (previousPageData && !previousPageData.length) return null;
 
-  return `/.netlify/functions/get-changing-places?page=${pageIndex}&limit=2000`;
+  return `/api/get-changing-places?page=${pageIndex}&limit=2000`;
 };
 
 const Home: NextPage = () => {
@@ -292,7 +292,7 @@ const Home: NextPage = () => {
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
                     onClick={async () => {
                       await fetch(
-                        `/.netlify/functions/delete-changing-place?id=${idToDelete}`
+                        `/api/delete-changing-place?id=${idToDelete}`
                       );
                       setIdToDelete(null);
                     }}

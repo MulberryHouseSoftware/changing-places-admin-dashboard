@@ -1,9 +1,8 @@
-import { Handler } from "@netlify/functions";
-import { csvFormat } from "d3-dsv";
-
-import { createClient } from "@supabase/supabase-js";
+import type { NextApiRequest, NextApiResponse } from "next";
 
 import { Database } from "../../database.types";
+import { createClient } from "@supabase/supabase-js";
+import { csvFormat } from "d3-dsv";
 
 // Create a single supabase client for interacting with your database
 const supabase = createClient<Database>(
@@ -11,7 +10,10 @@ const supabase = createClient<Database>(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjZ3FpbmtpbnJ1bGxzYmtjaWhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDM4MDAyMjUsImV4cCI6MjAxOTM3NjIyNX0.MkWX_HO7D4sgHh1DPRS5NlY_ELIZtxqUjMRVkW8Bkes"
 );
 
-const handler: Handler = async (event, context) => {
+export default async function handler(
+  _req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
     const { data, error } = await supabase.from("toilets").select();
 
@@ -25,18 +27,10 @@ const handler: Handler = async (event, context) => {
       throw new Error("No data found");
     }
 
-    return {
-      statusCode: 200,
-      contentType: "text/csv",
-      body: csvFormat(data),
-    };
+    res.status(200).setHeader("Content-Type", "text/csv").send(csvFormat(data));
   } catch (error) {
     console.log(error);
 
-    return {
-      statusCode: 500,
-    };
+    res.status(500).json({ error: "failed to load data" });
   }
-};
-
-export { handler };
+}

@@ -168,6 +168,7 @@ const Add: NextPage = () => {
                       <option value="Germany">Germany</option>
                       <option value="GB">United Kingdom</option>
                       <option value="United States">United States</option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
 

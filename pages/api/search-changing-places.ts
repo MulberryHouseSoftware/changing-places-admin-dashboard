@@ -16,10 +16,12 @@ export default async function handler(
   try {
     const { search = "" } = req.query;
 
+    const queryString = (search as string).split(" ").join("+");
+
     const { data, error } = await supabase
       .from("toilets")
       .select()
-      .textSearch("name", search as string);
+      .textSearch("name", queryString);
 
     if (error) {
       return res.status(500).json(error);
